@@ -1,0 +1,12 @@
+name: 'Julia Lint'
+description: 'Lint Julia files'
+runs:
+  using: "composite"
+  steps:
+    - name: Instantiate project
+      run: julia --project=. -e "using Pkg; Pkg.instaniate()"
+      shell: bash
+
+    - name: Lint
+      run: julia --project=. main.jl
+      shell: bash
