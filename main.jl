@@ -1,3 +1,7 @@
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.instantiate()
+
 using JuliaWorkspaces
 using JuliaWorkspaces.URIs2: uri2filepath
 
