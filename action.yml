@@ -4,7 +4,7 @@ runs:
   using: "composite"
   steps:
     - name: Instantiate project
-      run: julia --project=. -e "using Pkg; Pkg.instaniate()"
+      run: julia --project=. -e "using Pkg; Pkg.instantiate()"
       shell: bash
 
     - name: Lint
