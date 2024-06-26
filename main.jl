@@ -16,8 +16,8 @@ for file in files
         if diag.severity == :error || diag.severity == :warning
             text_file = get_text_file(jw, file)
 
-            start_pos = position_at(text_file.content, diag.range[1])
-            end_pos = position_at(text_file.content, diag.range[2])
+            start_pos = position_at(text_file.content, diag.range.start)
+            end_pos = position_at(text_file.content, diag.range.stop)
 
             println("start_pos $start_pos")
             println("end_pos $end_pos")
