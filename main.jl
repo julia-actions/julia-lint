@@ -9,7 +9,7 @@ jw = workspace_from_folders([pwd()])
 
 files = get_text_files(jw)
 
-fail_lint_pass = false
+global fail_lint_pass = false
 
 for file in files
     diagnostics = get_diagnostic(jw, file)
@@ -25,7 +25,7 @@ for file in files
         end
 
         if diag.severity == :error
-            fail_lint_pass = true
+            global fail_lint_pass = true
         end
     end
 end
