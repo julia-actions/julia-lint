@@ -9,6 +9,8 @@ jw = workspace_from_folders([pwd()])
 
 files = get_text_files(jw)
 
+fail_lint_pass = false
+
 for file in files
     diagnostics = get_diagnostic(jw, file)
 
@@ -21,5 +23,13 @@ for file in files
 
             println("::$(diag.severity) file=$(uri2filepath(file)),line=$(start_pos[1]),endLine=$(end_pos[1]),col=$(start_pos[2]),endColumn=$(end_pos[2]),title=$(diag.source)::$(diag.message)")
         end
+
+        if diag.severity == :error
+            fail_lint_pass = true
+        end
     end
+end
+
+if fail_lint_pass
+    exit(1)
 end
