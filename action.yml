@@ -4,5 +4,5 @@ runs:
   using: "composite"
   steps:
     - name: Lint
-      run: julia --project=. main.jl
+      run: julia ${{ github.action_path }}/main.jl
       shell: bash
