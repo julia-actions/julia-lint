@@ -49,7 +49,7 @@ version = "0.4.8"
 
 [[deps.JuliaWorkspaces]]
 deps = ["AutoHashEquals", "JuliaSyntax", "Pkg", "Salsa", "UUIDs"]
-git-tree-sha1 = "0b8b115faa49f3fc54b8b70f20c12fe61bf8fb46"
+git-tree-sha1 = "85331aacd6b25f19ec5f082a91f8e5a8f9a0df21"
 repo-rev = "salsa-rewrite"
 repo-url = "https://github.com/julia-vscode/JuliaWorkspaces.jl"
 uuid = "e554591c-7f10-434f-9f27-2097f62a04fd"
