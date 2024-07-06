@@ -5,7 +5,7 @@ Pkg.instantiate()
 using JuliaWorkspaces
 using JuliaWorkspaces.URIs2: uri2filepath
 
-println("WE ARE ON JULIA $VERSION")
+println("WE ARE ON JULIA $VERSION in folder $(pwd())")
 
 jw = workspace_from_folders([pwd()])
 
