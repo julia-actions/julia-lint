@@ -11,10 +11,14 @@ jw = workspace_from_folders([pwd()])
 
 files = get_text_files(jw)
 
+println("We have files $files")
+
 global fail_lint_pass = false
 
 for file in files
     diagnostics = get_diagnostic(jw, file)
+
+    println("And diagnostics $diagnostics")
 
     for diag in diagnostics
         if diag.severity == :error || diag.severity == :warning
