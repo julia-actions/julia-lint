@@ -5,6 +5,8 @@ Pkg.instantiate()
 using JuliaWorkspaces
 using JuliaWorkspaces.URIs2: uri2filepath
 
+println("WE ARE ON JULIA $VERSION")
+
 jw = workspace_from_folders([pwd()])
 
 files = get_text_files(jw)
