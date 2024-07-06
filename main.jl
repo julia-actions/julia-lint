@@ -5,6 +5,13 @@ Pkg.instantiate()
 using JuliaWorkspaces
 using JuliaWorkspaces.URIs2: uri2filepath
 
+function esc_data(s)
+    s = replace(s, '%' => "%25")
+    s = replace(s, '\r' => "%0D")
+    s = replace(s, '\n' => "%0A")
+    return s
+end
+
 jw = workspace_from_folders([pwd()])
 
 files = get_text_files(jw)
@@ -21,7 +28,7 @@ for file in files
             start_pos = position_at(text_file.content, diag.range.start)
             end_pos = position_at(text_file.content, diag.range.stop)
 
-            println("::$(diag.severity) file=$(uri2filepath(file)),line=$(start_pos[1]),endLine=$(end_pos[1]),col=$(start_pos[2]),endColumn=$(end_pos[2]),title=$(diag.source)::$(diag.message)")
+            println("::$(diag.severity) file=$(uri2filepath(file)),line=$(start_pos[1]),endLine=$(end_pos[1]),col=$(start_pos[2]),endColumn=$(end_pos[2]),title=$(esc_data(diag.source))::$(esc_data(diag.message))")
         end
 
         if diag.severity == :error
