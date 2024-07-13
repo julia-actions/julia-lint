@@ -7,7 +7,7 @@ runs:
       id: cache-project
       with:
         path: ~/.julia
-        key: cache-${{ runner.os }}-${{ hashFiles('Manifest.toml', 'Project.toml', 'main.jl') }}
+        key: cache-${{ runner.os }}-${{ hashFiles(format('{0}/Manifest.toml', github.action_path), format('{0}/Project.toml', github.action_path), format('{0}/main.jl', github.action_path)) }}
     - name: Install and precompile
       if: steps.cache-project.outputs.cache-hit != 'true'
       run: julia --project=${{ github.action_path }} -e 'import Pkg; Pkg.instantiate()'
@@ -16,7 +16,7 @@ runs:
       if: steps.cache-project.outputs.cache-hit != 'true'
       with:
         path: ~/.julia
-        key: cache-${{ runner.os }}-${{ hashFiles('Manifest.toml', 'Project.toml', 'main.jl') }}
+        key: cache-${{ runner.os }}-${{ hashFiles(format('{0}/Manifest.toml', github.action_path), format('{0}/Project.toml', github.action_path), format('{0}/main.jl', github.action_path)) }}
     - name: Lint
       run: julia --project=${{ github.action_path }} ${{ github.action_path }}/main.jl
       shell: bash
