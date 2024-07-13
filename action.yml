@@ -8,20 +8,26 @@ runs:
       with:
         script: return require('fs').createReadStream(require('path').join(process.env.GITHUB_ACTION_PATH, 'Manifest.toml')).pipe(require('crypto').createHash('sha1').setEncoding('hex'), 'finish').digest('hex')
         result-encoding: string
+    - name: Check Julia version
+      shell: bash
+      id: julia-version
+      run: |
+        echo "juliaversion=$(julia -v)" >> $GITHUB_OUTPUT
     - uses: actions/cache@v4
+      if: always()
       id: cache-project
       with:
         path: ~/.julia
-        key: cache-${{ runner.os }}-${{ steps.project-hash.outputs.result }}
+        key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.result }}
     - name: Install and precompile
       if: steps.cache-project.outputs.cache-hit != 'true'
       run: julia --project=${{ github.action_path }} -e 'import Pkg; Pkg.instantiate()'
       shell: bash
-    - uses: actions/cache/save@v3
-      if: steps.cache-project.outputs.cache-hit != 'true'
-      with:
-        path: ~/.julia
-        key: cache-${{ runner.os }}-${{ steps.project-hash.outputs.result }}
+    # - uses: actions/cache/save@v3
+    #   if: steps.cache-project.outputs.cache-hit != 'true'
+    #   with:
+    #     path: ~/.julia
+    #     key: cache-${{ runner.os }}-${{ steps.project-hash.outputs.result }}
     - name: Lint
       run: julia --project=${{ github.action_path }} ${{ github.action_path }}/main.jl
       shell: bash
