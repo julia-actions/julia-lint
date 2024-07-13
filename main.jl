@@ -42,6 +42,8 @@ for file in files
         start_pos = position_at(text_file.content, testerror.range.start)
         end_pos = position_at(text_file.content, testerror.range.stop)
         println("::error file=$(uri2filepath(file)),line=$(start_pos[1]),endLine=$(end_pos[1]),col=$(start_pos[2]),endColumn=$(end_pos[2]),title=Testitems::$(esc_data(testerror.message))")
+
+        global fail_lint_pass = true
     end
 end
 
