@@ -4,10 +4,12 @@ runs:
   using: "composite"
   steps:
     - uses: actions/github-script@v7
+    - name: Compute Manifest hash
       id: project-hash
-      with:
-        script: return require('fs').createReadStream(require('path').join(process.env.GITHUB_ACTION_PATH, 'Manifest.toml')).pipe(require('crypto').createHash('sha1').setEncoding('hex'), 'finish').digest('hex')
-        result-encoding: string
+      shell: pwsh
+      run: |
+        $ourHash = Get-FileHash -LiteralPath "$env:GITHUB_ACTION_PATH\Manifest.toml"
+        "MANIFEST_HASH=$($ourHash.Hash)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
     - name: Check Julia version
       shell: bash
       id: julia-version
@@ -17,7 +19,7 @@ runs:
       id: cache-project
       with:
         path: ${{ github.action_path }}/.julia
-        key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.result }}
+        key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.MANIFEST_HASH }}
     - name: Install and precompile
       if: steps.cache-project.outputs.cache-hit != 'true'
       run: julia --project=${{ github.action_path }} -e 'import Pkg; Pkg.instantiate()'
@@ -28,7 +30,7 @@ runs:
       if: steps.cache-project.outputs.cache-hit != 'true'
       with:
         path: ${{ github.action_path }}/.julia
-        key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.result }}
+        key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.MANIFEST_HASH }}
     - name: Lint
       run: julia --project=${{ github.action_path }} ${{ github.action_path }}/main.jl
       shell: bash
