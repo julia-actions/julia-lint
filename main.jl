@@ -19,11 +19,12 @@ files = get_text_files(jw)
 global fail_lint_pass = false
 
 for file in files
-    diagnostics = get_diagnostic(jw, file)
+    text_file = get_text_file(jw, file)
 
+    diagnostics = get_diagnostic(jw, file)
     for diag in diagnostics
         if diag.severity == :error || diag.severity == :warning
-            text_file = get_text_file(jw, file)
+            
 
             start_pos = position_at(text_file.content, diag.range.start)
             end_pos = position_at(text_file.content, diag.range.stop)
@@ -34,6 +35,13 @@ for file in files
         if diag.severity == :error
             global fail_lint_pass = true
         end
+    end
+
+    testitems = get_test_items(jw, file)
+    for testerror in testitems.testerrors
+        start_pos = position_at(text_file.content, testerror.range.start)
+        end_pos = position_at(text_file.content, testerror.range.stop)
+        println("::error file=$(uri2filepath(file)),line=$(start_pos[1]),endLine=$(end_pos[1]),col=$(start_pos[2]),endColumn=$(end_pos[2]),title=Testitems::$(esc_data(testerror.message))")
     end
 end
 
