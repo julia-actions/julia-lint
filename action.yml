@@ -3,6 +3,14 @@ description: 'Lint Julia files'
 runs:
   using: "composite"
   steps:
+    - uses: actions/cache@v4
+      id: cache-project
+      with:
+        path: ~/.julia
+        key: cache-${{ runner.os }}-${{ hashFiles('Manifest.toml', 'Project.toml', 'main.jl') }}
+    - name: Install and precompile
+      if: steps.cache-project.outputs.cache-hit != 'true'
+      run: julia --project=${{ github.action_path }} -e 'import Pkg; Pkg.instantiate()'
     - name: Lint
-      run: julia ${{ github.action_path }}/main.jl
+      run: julia --project=${{ github.action_path }} ${{ github.action_path }}/main.jl
       shell: bash
