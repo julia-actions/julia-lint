@@ -14,7 +14,7 @@ end
 
 jw = workspace_from_folders([pwd()])
 
-files = get_text_files(jw)
+files = get_julia_files(jw)
 
 global fail_lint_pass = false
 
