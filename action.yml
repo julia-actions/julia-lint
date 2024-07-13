@@ -17,12 +17,14 @@ runs:
       if: always()
       id: cache-project
       with:
-        path: ~/.julia
+        path: ${{ github.action_path }}/.julia
         key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.result }}
     - name: Install and precompile
       if: steps.cache-project.outputs.cache-hit != 'true'
       run: julia --project=${{ github.action_path }} -e 'import Pkg; Pkg.instantiate()'
       shell: bash
+      env:
+        JULIA_DEPOT_PATH: ${{ github.action_path }}/.julia
     # - uses: actions/cache/save@v3
     #   if: steps.cache-project.outputs.cache-hit != 'true'
     #   with:
@@ -31,3 +33,5 @@ runs:
     - name: Lint
       run: julia --project=${{ github.action_path }} ${{ github.action_path }}/main.jl
       shell: bash
+      env:
+        JULIA_DEPOT_PATH: ${{ github.action_path }}/.julia
