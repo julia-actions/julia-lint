@@ -14,7 +14,6 @@ runs:
       run: |
         echo "juliaversion=$(julia -v)" >> $GITHUB_OUTPUT
     - uses: actions/cache@v4
-      if: always()
       id: cache-project
       with:
         path: ${{ github.action_path }}/.julia
@@ -25,11 +24,11 @@ runs:
       shell: bash
       env:
         JULIA_DEPOT_PATH: ${{ github.action_path }}/.julia
-    # - uses: actions/cache/save@v3
-    #   if: steps.cache-project.outputs.cache-hit != 'true'
-    #   with:
-    #     path: ~/.julia
-    #     key: cache-${{ runner.os }}-${{ steps.project-hash.outputs.result }}
+    - uses: actions/cache/save@v3
+      if: steps.cache-project.outputs.cache-hit != 'true'
+      with:
+        path: ${{ github.action_path }}/.julia
+        key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.result }}
     - name: Lint
       run: julia --project=${{ github.action_path }} ${{ github.action_path }}/main.jl
       shell: bash
