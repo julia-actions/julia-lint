@@ -3,7 +3,6 @@ description: 'Lint Julia files'
 runs:
   using: "composite"
   steps:
-    - uses: actions/github-script@v7
     - name: Compute Manifest hash
       id: project-hash
       shell: pwsh
