@@ -43,6 +43,7 @@ for file in files
     end
 end
 
+
 if fail_lint_pass
     exit(1)
 end
