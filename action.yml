@@ -6,6 +6,9 @@ runs:
     - run: |
         echo "Trying various things"
         echo "${{ format('{0}/Manifest.toml', github.action_path) }}"
+        echo " Now doing LS "
+        ls ${{ format('{0}/Manifest.toml', github.action_path) }}
+        echo "Done with LS"
         echo "${{ hashFiles(format('{0}/Manifest.toml', github.action_path), format('{0}/Project.toml', github.action_path), format('{0}/main.jl', github.action_path)) }}"
       shell: bash
     # - uses: actions/cache@v4
