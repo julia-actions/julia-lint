@@ -25,7 +25,7 @@ runs:
       shell: bash
       env:
         JULIA_DEPOT_PATH: ${{ github.action_path }}/.julia
-    - uses: actions/cache/save@v3
+    - uses: actions/cache/save@v4
       if: steps.cache-project.outputs.cache-hit != 'true'
       with:
         path: ${{ github.action_path }}/.julia
