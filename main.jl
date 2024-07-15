@@ -46,23 +46,6 @@ for file in files
             "endColumn" => end_pos[2],
         ))
     end
-
-    # testitems = get_test_items(jw, file)
-    # for testerror in testitems.testerrors
-    #     start_pos = position_at(text_file.content, testerror.range.start)
-    #     end_pos = position_at(text_file.content, testerror.range.stop)
-    #     println("::error file=$(uri2filepath(file)),line=$(start_pos[1]),title=Testitems::$(esc_data(testerror.message))")
-
-    #     global fail_lint_pass = true
-
-    #     push!(exported_results, Dict(
-    #         "message" => testerror.message,
-    #         "severity" => "error",
-    #         "source" => "Testitems",
-    #         "uri" => file,
-    #         "line" => start_pos[1]
-    #     ))
-    # end
 end
 
 GitHubActions.set_output("lint-results", exported_results)
