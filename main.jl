@@ -14,6 +14,8 @@ files = get_julia_files(jw)
 
 global fail_lint_pass = false
 
+exported_results = []
+
 for file in files
     text_file = get_text_file(jw, file)
 
@@ -31,6 +33,17 @@ for file in files
         if diag.severity == :error
             global fail_lint_pass = true
         end
+
+        push!(exported_results, Dict(
+            "message" => diag.message,
+            "severity" => diag.severity,
+            "source" => diag, source,
+            "uri" => file,
+            "line" => start_pos[1],
+            "endLine" => end_pos[1],
+            "column" => start_pos[2],
+            "endColumn" => end_pos[2],
+        ))
     end
 
     testitems = get_test_items(jw, file)
@@ -40,9 +53,22 @@ for file in files
         println("::error file=$(uri2filepath(file)),line=$(start_pos[1]),title=Testitems::$(esc_data(testerror.message))")
 
         global fail_lint_pass = true
+
+        push!(exported_results, Dict(
+            "message" => testerror.message,
+            "severity" => "error",
+            "source" => "Testitems",
+            "uri" => file,
+            "line" => start_pos[1]
+        ))
     end
 end
 
+if haskey(ENV, "RESULTS_PATH")
+    open(ENV["RESULTS_PATH"], "w") do f
+        JSON.print(f, exported_results)
+    end
+end
 
 if fail_lint_pass
     exit(1)

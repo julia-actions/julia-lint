@@ -1,5 +1,9 @@
 name: 'Julia Lint'
 description: 'Lint Julia files'
+inputs:
+  results-path:
+    type: string
+    required: false
 runs:
   using: "composite"
   steps:
@@ -35,3 +39,4 @@ runs:
       shell: bash
       env:
         JULIA_DEPOT_PATH: ${{ github.action_path }}/.julia
+        RESULTS_PATH: ${{ inputs.results-path }}
