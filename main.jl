@@ -38,7 +38,7 @@ for file in files
         push!(exported_results, Dict(
             "message" => diag.message,
             "severity" => diag.severity,
-            "source" => diag, source,
+            "source" => diag.source,
             "uri" => string(file),
             "line" => start_pos[1],
             "endLine" => end_pos[1],
