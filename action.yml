@@ -1,7 +1,7 @@
 name: 'Julia Lint'
 description: 'Lint Julia files'
 outputs:
-  exported-results:
+  lint-results:
     value: ${{ steps.lint-step.outputs.lint-results }}
 runs:
   using: "composite"
