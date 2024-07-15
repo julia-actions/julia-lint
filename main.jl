@@ -39,7 +39,7 @@ for file in files
             "message" => diag.message,
             "severity" => diag.severity,
             "source" => diag, source,
-            "uri" => file,
+            "uri" => string(file),
             "line" => start_pos[1],
             "endLine" => end_pos[1],
             "column" => start_pos[2],
