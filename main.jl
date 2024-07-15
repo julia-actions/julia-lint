@@ -1,5 +1,6 @@
 using JuliaWorkspaces
 using JuliaWorkspaces.URIs2: uri2filepath
+import GitHubActions
 
 function esc_data(s)
     s = replace(s, '%' => "%25")
@@ -64,11 +65,7 @@ for file in files
     end
 end
 
-if haskey(ENV, "RESULTS_PATH")
-    open(ENV["RESULTS_PATH"], "w") do f
-        JSON.print(f, exported_results)
-    end
-end
+GitHubActions.set_output("lint-results", exported_results)
 
 if fail_lint_pass
     exit(1)

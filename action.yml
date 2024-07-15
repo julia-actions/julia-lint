@@ -1,9 +1,8 @@
 name: 'Julia Lint'
 description: 'Lint Julia files'
-inputs:
-  results-path:
-    type: string
-    required: false
+outputs:
+  exported-results:
+    value: ${{ steps.lint-step.outputs.lint-results }}
 runs:
   using: "composite"
   steps:
@@ -35,8 +34,8 @@ runs:
         path: ${{ github.action_path }}/.julia
         key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.MANIFEST_HASH }}
     - name: Lint
+      id: lint-step
       run: julia --project=${{ github.action_path }} ${{ github.action_path }}/main.jl
       shell: bash
       env:
         JULIA_DEPOT_PATH: ${{ github.action_path }}/.julia
-        RESULTS_PATH: ${{ inputs.results-path }}
