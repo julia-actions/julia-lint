@@ -1,6 +1,31 @@
 name: 'Julia Lint'
 description: 'Lint a Julia repository with julialint (JuliaLintApp)'
+branding:
+  icon: 'check-circle'
+  color: 'purple'
 inputs:
+  path:
+    description: 'Path to lint, relative to the workspace'
+    required: false
+    default: '.'
+  sarif-path:
+    description: 'Path to write the SARIF results file to, relative to the workspace'
+    required: false
+    default: 'lint-results.sarif'
+  max-warnings:
+    description: 'Fail when the warning count exceeds this number (default: unlimited)'
+    required: false
+    default: ''
+  quiet:
+    description: 'Report only errors (suppress warnings, info, and hints)'
+    required: false
+    default: 'false'
+  fail-on-errors:
+    description: >-
+      Fail the step when lint errors are found. When false, lint findings never fail
+      the step (a julialint tool failure still does).
+    required: false
+    default: 'true'
   code-scanning-upload:
     description: 'Also upload the SARIF to GitHub code scanning (requires the security-events: write permission)'
     required: false
@@ -8,7 +33,13 @@ inputs:
 outputs:
   sarif-path:
     description: 'Path of the produced SARIF file, relative to the workspace'
-    value: lint-results.sarif
+    value: ${{ inputs.sarif-path }}
+  error-count:
+    description: 'Number of error-severity lint results'
+    value: ${{ steps.annotate.outputs.error-count }}
+  warning-count:
+    description: 'Number of warning-severity lint results'
+    value: ${{ steps.annotate.outputs.warning-count }}
 runs:
   using: "composite"
   steps:
@@ -30,16 +61,35 @@ runs:
       # upload steps below still run; the last step re-raises it.
       run: |
         set +e
-        julia --color=yes --project="$GITHUB_ACTION_PATH" -m JuliaLintApp . --format sarif -o lint-results.sarif
+        args=("${LINT_PATH:-.}" --format sarif -o "${SARIF_PATH:-lint-results.sarif}")
+        if [ -n "$MAX_WARNINGS" ]; then args+=(--max-warnings "$MAX_WARNINGS"); fi
+        if [ "$QUIET" = "true" ]; then args+=(--quiet); fi
+        julia --color=yes --project="$GITHUB_ACTION_PATH" -m JuliaLintApp "${args[@]}"
         echo "exit-code=$?" >> "$GITHUB_OUTPUT"
+      env:
+        LINT_PATH: ${{ inputs.path }}
+        SARIF_PATH: ${{ inputs.sarif-path }}
+        MAX_WARNINGS: ${{ inputs.max-warnings }}
+        QUIET: ${{ inputs.quiet }}
     - name: Emit annotations
+      id: annotate
       if: ${{ steps.lint.outputs.exit-code != '2' }}
       shell: bash
-      run: node "$GITHUB_ACTION_PATH/dist/index.js" lint-results.sarif
+      run: node "$GITHUB_ACTION_PATH/dist/index.js" "$SARIF_PATH"
+      env:
+        SARIF_PATH: ${{ inputs.sarif-path }}
     - uses: github/codeql-action/upload-sarif@v3
       if: ${{ inputs.code-scanning-upload == 'true' && steps.lint.outputs.exit-code != '2' }}
       with:
-        sarif_file: lint-results.sarif
+        sarif_file: ${{ inputs.sarif-path }}
     - name: Propagate lint exit code
       shell: bash
-      run: exit ${{ steps.lint.outputs.exit-code }}
+      # A tool failure (exit code 2) always fails; lint findings (exit code 1)
+      # only fail when fail-on-errors is true.
+      run: |
+        code=${CODE:-2}
+        if [ "$FAIL_ON_ERRORS" != "true" ] && [ "$code" = "1" ]; then exit 0; fi
+        exit $code
+      env:
+        CODE: ${{ steps.lint.outputs.exit-code }}
+        FAIL_ON_ERRORS: ${{ inputs.fail-on-errors }}

@@ -19,9 +19,10 @@ uses the same, known-good versions. It runs the equivalent of
   example for [julia-report-ci-results](https://github.com/julia-actions/julia-report-ci-results);
 - optionally uploads the SARIF to GitHub code scanning.
 
-The job fails when lint errors are found (exit code 1) or when `julialint`
-itself fails (exit code 2); the SARIF file and annotations are still produced
-in the error case.
+By default the job fails when lint errors are found (exit code 1) or when
+`julialint` itself fails (exit code 2); the SARIF file and annotations are
+still produced in the error case. Set `fail-on-errors: false` to make lint
+findings non-fatal (a tool failure still fails the step).
 
 ## Usage
 
@@ -44,13 +45,20 @@ jobs:
 
 | Input | Default | Description |
 | --- | --- | --- |
+| `path` | `.` | Path to lint, relative to the workspace. |
+| `sarif-path` | `lint-results.sarif` | Path to write the SARIF results file to, relative to the workspace. |
+| `max-warnings` | *(unlimited)* | Fail when the warning count exceeds this number. |
+| `quiet` | `false` | Report only errors (suppress warnings, info, and hints). |
+| `fail-on-errors` | `true` | Fail the step when lint errors are found. When `false`, lint findings never fail the step (a `julialint` tool failure still does). |
 | `code-scanning-upload` | `false` | Also upload the SARIF to GitHub code scanning. Requires the `security-events: write` permission; on private repositories this needs GitHub Code Security. |
 
 ## Outputs
 
 | Output | Description |
 | --- | --- |
-| `sarif-path` | Path of the produced SARIF file, relative to the workspace (`lint-results.sarif`). |
+| `sarif-path` | Path of the produced SARIF file, relative to the workspace. |
+| `error-count` | Number of error-severity lint results. |
+| `warning-count` | Number of warning-severity lint results. |
 
 ## Updating pinned dependencies
 

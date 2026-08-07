@@ -7,10 +7,15 @@ function run(): void {
 
     if (!fs.existsSync(sarifPath)) {
         core.notice(`No SARIF file found at ${sarifPath}; skipping lint annotations.`);
+        core.setOutput('error-count', 0);
+        core.setOutput('warning-count', 0);
         return;
     }
 
     const annotations = annotationsFromSarif(JSON.parse(fs.readFileSync(sarifPath, 'utf8')));
+
+    core.setOutput('error-count', annotations.filter(a => a.level === 'error').length);
+    core.setOutput('warning-count', annotations.filter(a => a.level === 'warning').length);
 
     for (const a of annotations) {
         const properties = {
