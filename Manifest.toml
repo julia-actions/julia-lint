@@ -101,10 +101,10 @@ uuid = "b9b8584e-8fd3-41f9-ad0c-7255d428e418"
 version = "3.0.1"
 
 [[deps.JuliaFormatter]]
-deps = ["CommonMark", "Glob", "JuliaSyntax", "PrecompileTools", "TOML"]
-git-tree-sha1 = "734a648c54e0512112049150965e85c887ae7fa3"
+deps = ["CommonMark", "Glob", "JuliaSyntax", "PrecompileTools", "TOML", "Test"]
+git-tree-sha1 = "3c899577176e224720236a3d9b735403147c2857"
 uuid = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
-version = "2.4.0"
+version = "2.12.4"
 
 [[deps.JuliaLintApp]]
 deps = ["ArgParse", "JSON", "JuliaWorkspaces", "Logging", "PrecompileTools"]
@@ -115,9 +115,9 @@ uuid = "0ca8a2e7-ee8a-47e9-8624-e03a53d93e73"
 version = "0.1.0"
 
 [[deps.JuliaSyntax]]
-git-tree-sha1 = "937da4713526b96ac9a178e2035019d3b78ead4a"
+git-tree-sha1 = "0d4b3dab95018bcf3925204475693d9f09dc45b8"
 uuid = "70703baa-626e-46a2-a12c-08ffd08c73b4"
-version = "0.4.10"
+version = "1.0.2"
 
 [[deps.JuliaSyntaxHighlighting]]
 deps = ["StyledStrings"]
@@ -234,9 +234,9 @@ version = "1.11.0"
 
 [[deps.Runic]]
 deps = ["JuliaSyntax", "Preferences"]
-git-tree-sha1 = "657ea2d3240b30fd21dec3e2fe772de50e9e8645"
+git-tree-sha1 = "e9e8a83c48259f4364b5d3f9092a96afde20fb42"
 uuid = "62bfec6d-59d7-401d-8490-b29ee721c001"
-version = "1.5.1"
+version = "1.7.0"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -283,9 +283,9 @@ version = "1.11.0"
 
 [[deps.TestItemDetection]]
 deps = ["JuliaSyntax"]
-git-tree-sha1 = "cc24849d7d685195215cd3c38ae3bc5a57b6deaf"
+git-tree-sha1 = "b9205d66825d827a03aa9e28cba9b08d37c8f573"
 uuid = "76b0de8b-5c4b-48ef-a724-914b33ca988d"
-version = "1.1.0"
+version = "1.1.1"
 
 [[deps.TextWrap]]
 git-tree-sha1 = "43044b737fa70bc12f6105061d3da38f881a3e3c"
