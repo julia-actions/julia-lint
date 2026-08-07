@@ -1,41 +1,44 @@
 name: 'Julia Lint'
-description: 'Lint Julia files'
+description: 'Lint a Julia repository with julialint (JuliaLintApp)'
+inputs:
+  code-scanning-upload:
+    description: 'Also upload the SARIF to GitHub code scanning (requires the security-events: write permission)'
+    required: false
+    default: 'false'
 outputs:
-  lint-results:
-    value: ${{ steps.lint-step.outputs.lint-results }}
+  sarif-path:
+    description: 'Path of the produced SARIF file, relative to the workspace'
+    value: lint-results.sarif
 runs:
   using: "composite"
   steps:
-    - name: Compute Manifest hash
-      id: project-hash
-      shell: pwsh
-      run: |
-        $ourHash = Get-FileHash -LiteralPath "$env:GITHUB_ACTION_PATH\Manifest.toml"
-        "MANIFEST_HASH=$($ourHash.Hash)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-    - name: Check Julia version
-      shell: bash
-      id: julia-version
-      run: |
-        echo "juliaversion=$(julia -v)" >> $GITHUB_OUTPUT
-    - uses: actions/cache@v4
-      id: cache-project
+    - uses: julia-actions/install-juliaup@v2
       with:
-        path: ${{ github.action_path }}/.julia
-        key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.MANIFEST_HASH }}
-    - name: Install and precompile
-      if: steps.cache-project.outputs.cache-hit != 'true'
-      run: julia --project=${{ github.action_path }} -e 'import Pkg; Pkg.instantiate()'
+        channel: release
+    - uses: julia-actions/cache@v2
+    - name: Install the JuliaLintApp app
       shell: bash
-      env:
-        JULIA_DEPOT_PATH: ${{ github.action_path }}/.julia
-    - uses: actions/cache/save@v4
-      if: steps.cache-project.outputs.cache-hit != 'true'
-      with:
-        path: ${{ github.action_path }}/.julia
-        key: julia-lint-cache-${{ runner.os }}-${{ steps.julia-version.outputs.juliaversion }}-${{ steps.project-hash.outputs.MANIFEST_HASH }}
+      run: |
+        # TODO pin a rev/tag once JuliaLintApp tags releases
+        julia --color=yes -e 'using Pkg; Pkg.Apps.add(url="https://github.com/julia-vscode/JuliaLintApp.jl")'
+        echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
     - name: Lint
-      id: lint-step
-      run: julia --project=${{ github.action_path }} ${{ github.action_path }}/main.jl
+      id: lint
       shell: bash
-      env:
-        JULIA_DEPOT_PATH: ${{ github.action_path }}/.julia
+      # Capture the exit code instead of failing here so the annotation and
+      # upload steps below still run; the last step re-raises it.
+      run: |
+        set +e
+        julialint --format sarif -o lint-results.sarif .
+        echo "exit-code=$?" >> "$GITHUB_OUTPUT"
+    - name: Emit annotations
+      if: ${{ steps.lint.outputs.exit-code != '2' }}
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/dist/index.js" lint-results.sarif
+    - uses: github/codeql-action/upload-sarif@v3
+      if: ${{ inputs.code-scanning-upload == 'true' && steps.lint.outputs.exit-code != '2' }}
+      with:
+        sarif_file: lint-results.sarif
+    - name: Propagate lint exit code
+      shell: bash
+      run: exit ${{ steps.lint.outputs.exit-code }}

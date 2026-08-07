@@ -1,0 +1,19 @@
+{
+  "name": "julia-lint",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Lint a Julia repository with julialint and emit GitHub annotations from its SARIF output",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && ncc build dist/src/index.js -o dist",
+    "test": "tsc && node --test dist/test/annotations.test.js"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vercel/ncc": "^0.38.0",
+    "typescript": "^5.0.0"
+  }
+}
