@@ -16,12 +16,13 @@ runs:
       with:
         channel: release
     - uses: julia-actions/cache@v2
-    - name: Install the JuliaLintApp app
+    - name: Install and precompile
       shell: bash
-      run: |
-        # TODO pin a rev/tag once JuliaLintApp tags releases
-        julia --color=yes -e 'using Pkg; Pkg.Apps.add(url="https://github.com/julia-vscode/JuliaLintApp.jl")'
-        echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
+      # The committed Manifest.toml pins the exact versions of JuliaLintApp
+      # and all of its dependencies; instantiate installs precisely those.
+      run: julia --color=yes -e 'import Pkg; Pkg.instantiate()'
+      env:
+        JULIA_PROJECT: ${{ github.action_path }}
     - name: Lint
       id: lint
       shell: bash
@@ -29,7 +30,7 @@ runs:
       # upload steps below still run; the last step re-raises it.
       run: |
         set +e
-        julialint --format sarif -o lint-results.sarif .
+        julia --color=yes --project="$GITHUB_ACTION_PATH" -m JuliaLintApp . --format sarif -o lint-results.sarif
         echo "exit-code=$?" >> "$GITHUB_OUTPUT"
     - name: Emit annotations
       if: ${{ steps.lint.outputs.exit-code != '2' }}

@@ -6,8 +6,10 @@
 A GitHub Action that lints a Julia repository with
 [`julialint`](https://github.com/julia-vscode/JuliaLintApp.jl).
 
-The action installs Julia (via juliaup) and the JuliaLintApp app itself, so it
-has no prerequisites beyond a checkout. It runs
+The action installs Julia (via juliaup) and JuliaLintApp itself, so it has no
+prerequisites beyond a checkout. The exact versions of JuliaLintApp and all of
+its dependencies are pinned by the committed `Manifest.toml`, so every run
+uses the same, known-good versions. It runs the equivalent of
 `julialint --format sarif -o lint-results.sarif .` in the workspace and then:
 
 - emits inline `::error`/`::warning`/`::notice` annotations (visible in the PR
@@ -49,6 +51,14 @@ jobs:
 | Output | Description |
 | --- | --- |
 | `sarif-path` | Path of the produced SARIF file, relative to the workspace (`lint-results.sarif`). |
+
+## Updating pinned dependencies
+
+```
+julia --project=. -e 'using Pkg; Pkg.update()'
+```
+
+and commit the changed `Manifest.toml`.
 
 ## Development
 
