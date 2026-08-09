@@ -1,5 +1,5 @@
 name: 'Julia Lint'
-description: 'Lint a Julia repository with julialint (JuliaLintApp)'
+description: 'Lint a Julia repository with julialint (LintApp)'
 branding:
   icon: 'check-circle'
   color: 'purple'
@@ -49,7 +49,7 @@ runs:
     - uses: julia-actions/cache@v2
     - name: Install and precompile
       shell: bash
-      # The committed Manifest.toml pins the exact versions of JuliaLintApp
+      # The committed Manifest.toml pins the exact versions of LintApp
       # and all of its dependencies; instantiate installs precisely those.
       run: julia --color=yes -e 'import Pkg; Pkg.instantiate()'
       env:
@@ -64,7 +64,7 @@ runs:
         args=("${LINT_PATH:-.}" --format sarif -o "${SARIF_PATH:-lint-results.sarif}")
         if [ -n "$MAX_WARNINGS" ]; then args+=(--max-warnings "$MAX_WARNINGS"); fi
         if [ "$QUIET" = "true" ]; then args+=(--quiet); fi
-        julia --color=yes --project="$GITHUB_ACTION_PATH" -m JuliaLintApp "${args[@]}"
+        julia --color=yes --project="$GITHUB_ACTION_PATH" -m LintApp "${args[@]}"
         echo "exit-code=$?" >> "$GITHUB_OUTPUT"
       env:
         LINT_PATH: ${{ inputs.path }}

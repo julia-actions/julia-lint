@@ -1,5 +1,5 @@
 [deps]
-JuliaLintApp = "0ca8a2e7-ee8a-47e9-8624-e03a53d93e73"
+LintApp = "0ca8a2e7-ee8a-47e9-8624-e03a53d93e73"
 
 [sources]
-JuliaLintApp = {url = "https://github.com/julia-vscode/JuliaLintApp.jl", rev = "main"}
+LintApp = {url = "https://github.com/julia-vscode/LintApp.jl", rev = "main"}

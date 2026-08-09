@@ -4,10 +4,10 @@
 > This action is under active development and its interface may change.
 
 A GitHub Action that lints a Julia repository with
-[`julialint`](https://github.com/julia-vscode/JuliaLintApp.jl).
+[`julialint`](https://github.com/julia-vscode/LintApp.jl).
 
-The action installs Julia (via juliaup) and JuliaLintApp itself, so it has no
-prerequisites beyond a checkout. The exact versions of JuliaLintApp and all of
+The action installs Julia (via juliaup) and LintApp itself, so it has no
+prerequisites beyond a checkout. The exact versions of LintApp and all of
 its dependencies are pinned by the committed `Manifest.toml`, so every run
 uses the same, known-good versions. It runs the equivalent of
 `julialint --format sarif -o lint-results.sarif .` in the workspace and then:
@@ -83,4 +83,4 @@ and commit the updated `dist/index.js` together with the source change.
 
 Linting behavior is configured with a `JuliaLint.toml` file in the linted
 repository — see the
-[JuliaLintApp documentation](https://github.com/julia-vscode/JuliaLintApp.jl#configuration).
+[LintApp documentation](https://github.com/julia-vscode/LintApp.jl#configuration).
