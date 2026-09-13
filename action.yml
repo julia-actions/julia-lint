@@ -43,10 +43,10 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: julia-actions/install-juliaup@v2
+    - uses: julia-actions/install-juliaup@v3
       with:
         channel: release
-    - uses: julia-actions/cache@v2
+    - uses: julia-actions/cache@v3
     # The toolkit -- LintApp and the tree this repository's manifest pins -- is the same on
     # every run, so it does not belong in the job's depot where it is re-saved per run and
     # duplicated per ref. It gets a depot of its own here, under a key nothing run-specific
@@ -101,7 +101,7 @@ runs:
         "depot=$depot" >> $env:GITHUB_OUTPUT
         "cpu-target=$cpuTarget" >> $env:GITHUB_OUTPUT
     - name: Restore the toolkit depot
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         # Deliberately no `restore-keys`: a prefix match would load a depot precompiled by a
         # different Julia, which is the one case this key exists to rule out. `v=1` is a
@@ -157,7 +157,7 @@ runs:
       run: node "$GITHUB_ACTION_PATH/dist/index.js" "$SARIF_PATH"
       env:
         SARIF_PATH: ${{ inputs.sarif-path }}
-    - uses: github/codeql-action/upload-sarif@v3
+    - uses: github/codeql-action/upload-sarif@v4
       if: ${{ inputs.code-scanning-upload == 'true' && steps.lint.outputs.exit-code != '2' }}
       with:
         sarif_file: ${{ inputs.sarif-path }}
