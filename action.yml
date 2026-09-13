@@ -47,6 +47,79 @@ runs:
       with:
         channel: release
     - uses: julia-actions/cache@v2
+    # The toolkit -- LintApp and the tree this repository's manifest pins -- is the same on
+    # every run, so it does not belong in the job's depot where it is re-saved per run and
+    # duplicated per ref. It gets a depot of its own here, under a key nothing run-specific
+    # enters, so it is written once and then only read.
+    - name: Resolve the toolkit cache key
+      id: toolkit
+      shell: pwsh
+      run: |
+        $version = (julia --version) -replace '^julia version ', ''
+        # `hashFiles()` is no use here: it only resolves paths under GITHUB_WORKSPACE, and
+        # the manifest that pins the toolkit lives in the action's own directory.
+        $manifest = Join-Path $env:GITHUB_ACTION_PATH 'Manifest.toml'
+        $hash = (Get-FileHash -Algorithm SHA256 $manifest).Hash.Substring(0, 16)
+        # Julia compiles package images for whichever machine precompiles them: `cpu_target`
+        # defaults to "native", and it is the literal string "native" -- not the
+        # microarchitecture it resolves to -- that goes into the cache slug. A depot built on
+        # one runner and restored onto another with a different CPU therefore has files at
+        # exactly the paths Julia looks in, holding code it then refuses, and the toolkit
+        # recompiles despite the cache hit. GitHub's fleet is mixed enough for that to happen
+        # regularly; see julia-actions/cache#114. These are the multi-versioned targets the
+        # Julia devdocs give for a portable system image.
+        $cpuTarget = switch -Regex ($env:RUNNER_ARCH) {
+            '^(X64|x64|x86_64)$' { 'generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)' }
+            '^(X86|x86|i686)$'   { 'pentium4' }
+            '^(ARM64|aarch64)$'  { 'generic' }
+            default              { '' }
+        }
+        # A target the platform does not support makes Julia refuse to start, so it is probed
+        # rather than assumed. `--cpu-target` rejects a multi-versioned string outright unless
+        # a sysimage is being written, so each variant's CPU name is checked on its own; the
+        # feature flags and `clone_all`/`base(1)` around them are multi-versioning syntax
+        # rather than anything platform-dependent.
+        $supported = [bool] $cpuTarget
+        foreach ($variant in ($cpuTarget -split ';')) {
+            if (-not $supported) { break }
+            julia "--cpu-target=$(($variant -split ',')[0])" -e 'exit(0)' 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { $supported = $false }
+        }
+        if (-not $supported) {
+            if ($cpuTarget) {
+                Write-Host "::warning::Julia here does not support --cpu-target=$cpuTarget; leaving its default, so this toolkit cache is not portable between runner CPUs."
+            }
+            # The string Julia uses when the variable is unset, so this is exactly the
+            # behaviour the action had before.
+            $cpuTarget = 'native'
+        }
+        # Forward slashes throughout: `actions/cache` matches the paths below as globs, and a
+        # Windows backslash is an escape character to the glob parser. Julia takes either.
+        $depot = (Join-Path $env:RUNNER_TEMP 'julia-lint-toolkit-depot') -replace '\\', '/'
+        "version=$version" >> $env:GITHUB_OUTPUT
+        "hash=$hash" >> $env:GITHUB_OUTPUT
+        "depot=$depot" >> $env:GITHUB_OUTPUT
+        "cpu-target=$cpuTarget" >> $env:GITHUB_OUTPUT
+    - name: Restore the toolkit depot
+      uses: actions/cache@v4
+      with:
+        # Deliberately no `restore-keys`: a prefix match would load a depot precompiled by a
+        # different Julia, which is the one case this key exists to rule out. `v=1` is a
+        # hand-turned version for the contents of the entry, and it matters because an exact
+        # hit suppresses the save -- an entry that has become unusable would otherwise be
+        # restored, rejected, rebuilt and then not replaced, on every run, forever. Bump it
+        # for any change that makes existing entries unusable rather than merely stale: a
+        # different `$cpuTarget`, which is part of the cache slug Julia computes, or a
+        # different set of cached paths below.
+        key: julia-lint-toolkit;v=1;os=${{ runner.os }};arch=${{ runner.arch }};julia=${{ steps.toolkit.outputs.version }};manifest=${{ steps.toolkit.outputs.hash }}
+        # `scratchspaces` and `logs` are left out on purpose: this entry is written once and
+        # read forever after, so anything workspace-shaped in it would be frozen for every
+        # later user of the key.
+        path: |
+          ${{ steps.toolkit.outputs.depot }}/packages
+          ${{ steps.toolkit.outputs.depot }}/compiled
+          ${{ steps.toolkit.outputs.depot }}/artifacts
+          ${{ steps.toolkit.outputs.depot }}/registries
     - name: Install and precompile
       shell: bash
       # The committed Manifest.toml pins the exact versions of LintApp
@@ -54,6 +127,8 @@ runs:
       run: julia --color=yes -e 'import Pkg; Pkg.instantiate()'
       env:
         JULIA_PROJECT: ${{ github.action_path }}
+        JULIA_DEPOT_PATH: ${{ steps.toolkit.outputs.depot }}
+        JULIA_CPU_TARGET: ${{ steps.toolkit.outputs.cpu-target }}
     - name: Lint
       id: lint
       shell: bash
@@ -67,6 +142,10 @@ runs:
         julia --color=yes --project="$GITHUB_ACTION_PATH" -m LintApp "${args[@]}"
         echo "exit-code=$?" >> "$GITHUB_OUTPUT"
       env:
+        # The toolkit lives in a depot of its own, and its cache slug is recomputed
+        # at load time -- so both have to be set here too, not only where it was built.
+        JULIA_DEPOT_PATH: ${{ steps.toolkit.outputs.depot }}
+        JULIA_CPU_TARGET: ${{ steps.toolkit.outputs.cpu-target }}
         LINT_PATH: ${{ inputs.path }}
         SARIF_PATH: ${{ inputs.sarif-path }}
         MAX_WARNINGS: ${{ inputs.max-warnings }}
