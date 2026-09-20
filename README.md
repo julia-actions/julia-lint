@@ -99,12 +99,21 @@ registries and the packages your repository's environments resolve to are
 carried from one run to the next.
 
 That depot starts out empty on a fresh runner — in particular without a
-registry — so the action clones the default registries into it before linting.
-Without that, resolving an environment whose `Manifest.toml` is not committed
-fails with *"no registries have been installed"* and the affected scope gets
-degraded missing-reference checks. The clone step runs *after*
-`julia-actions/cache`, which is what lets the restored copy be reused (and
-refreshed) rather than re-cloned on every run.
+registry — so the action installs the default registries into it before
+linting. Without that, resolving an environment whose `Manifest.toml` is not
+committed fails with *"no registries have been installed"* and the affected
+scope gets degraded missing-reference checks.
+
+On a run that restored a cached depot the registries are **refreshed** instead,
+so every run resolves against the current registry rather than against whatever
+was current when the cache entry happened to be written. The step runs *after*
+`julia-actions/cache` — that action only caches the `registries` directory when
+it does not already exist when it runs, so installing earlier would quietly
+drop it from the cache.
+
+Neither is fatal: if the registries cannot be installed or refreshed the run
+continues with a `::warning::` and whatever copy is present, since a degraded
+analysis beats a failed job for a transient outage.
 
 ### The toolkit depot
 

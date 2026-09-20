@@ -64,17 +64,35 @@ runs:
     # carry the result to the next run. That ordering is required, not incidental: the
     # cache action only adds `registries` to its cached paths when that directory does
     # not yet exist when it runs.
-    - name: Install registries into the job depot
+    #
+    # A restored registry can be arbitrarily old -- the cache entry is only as fresh as
+    # the last run that saved one -- and resolving a repository against a stale registry
+    # gives answers that do not match what its CI would install. So refresh rather than
+    # merely reuse. `julia-actions/cache` happens to run `Pkg.Registry.update()` itself
+    # after restoring a non-empty registries directory, but that is an undocumented
+    # implementation detail of that action rather than a contract, and this action's
+    # results should not silently go stale if it changes. The duplicated update costs a
+    # second or two when it has in fact already happened.
+    #
+    # Best-effort throughout: a registry that could not be installed or refreshed
+    # degrades the analysis (`julialint` reports it per-scope) but should not turn a
+    # transient outage into a failed lint job.
+    - name: Install or refresh the registries in the job depot
       shell: bash
       # No JULIA_DEPOT_PATH here, deliberately: this has to land in the default depot.
       run: |
         julia --color=yes -e '
           import Pkg
-          if isempty(Pkg.Registry.reachable_registries())
-              Pkg.Registry.add()
-          else
-              # `julia-actions/cache` has already refreshed what it restored.
-              println("Registries already present in $(DEPOT_PATH[1]); nothing to do.")
+          try
+              if isempty(Pkg.Registry.reachable_registries())
+                  Pkg.Registry.add()
+              else
+                  Pkg.Registry.update()
+              end
+          catch err
+              showerror(stderr, err)
+              println(stderr)
+              println("::warning::Could not install or refresh the Julia registries in $(DEPOT_PATH[1]); environments may not resolve.")
           end
         '
     # The toolkit -- LintApp and the tree this repository's manifest pins -- is the same on
