@@ -87,6 +87,36 @@ repository — see the
 
 ## Caching
 
+The action uses two Julia depots.
+
+### The job depot
+
+`julialint` analyses the environments of the repository being linted in child
+processes, and those resolve against the runner's default depot, `~/.julia`.
+The action caches it with
+[`julia-actions/cache`](https://github.com/julia-actions/cache), so the
+registries and the packages your repository's environments resolve to are
+carried from one run to the next.
+
+That depot starts out empty on a fresh runner — in particular without a
+registry — so the action installs the default registries into it before
+linting. Without that, resolving an environment whose `Manifest.toml` is not
+committed fails with *"no registries have been installed"* and the affected
+scope gets degraded missing-reference checks.
+
+On a run that restored a cached depot the registries are **refreshed** instead,
+so every run resolves against the current registry rather than against whatever
+was current when the cache entry happened to be written. The step runs *after*
+`julia-actions/cache` — that action only caches the `registries` directory when
+it does not already exist when it runs, so installing earlier would quietly
+drop it from the cache.
+
+Neither is fatal: if the registries cannot be installed or refreshed the run
+continues with a `::warning::` and whatever copy is present, since a degraded
+analysis beats a failed job for a transient outage.
+
+### The toolkit depot
+
 The action caches its own toolkit — LintApp and the tree its `Manifest.toml`
 pins — in a depot of its own under `RUNNER_TEMP`, keyed on the runner OS and
 architecture, the Julia version and a hash of that manifest. Nothing
@@ -104,4 +134,4 @@ A platform whose Julia does not accept the target gets a warning and Julia's
 default instead, keeping the behaviour it had before.
 
 None of this needs configuration, and nothing in your workflow should point at
-that depot.
+the toolkit depot.

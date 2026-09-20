@@ -47,6 +47,54 @@ runs:
       with:
         channel: release
     - uses: julia-actions/cache@v3
+    # `julialint` analyses the environments of the repository being linted in child
+    # processes, and those deliberately drop JULIA_DEPOT_PATH so that the repository
+    # resolves against the machine's real depot rather than whatever private one the
+    # tool itself was started with. On a runner that is `~/.julia`, and nothing else in
+    # this job ever runs Pkg against it -- the toolkit below gets its own depot, and the
+    # registries Pkg clones while installing the toolkit land there. So the depot the
+    # children actually use holds no registry, and the first thing that needs one fails:
+    # `Pkg.resolve` is the one Pkg entry point in that path which does not clone the
+    # default registries itself (`instantiate` and `develop` both do), so a repository
+    # with no committed Manifest.toml reports "no registries have been installed" and
+    # gets degraded missing-reference checks.
+    #
+    # Doing it here rather than leaving it to the children also keeps a registry clone
+    # out of a timed indexing request, and lets the `julia-actions/cache` entry above
+    # carry the result to the next run. That ordering is required, not incidental: the
+    # cache action only adds `registries` to its cached paths when that directory does
+    # not yet exist when it runs.
+    #
+    # A restored registry can be arbitrarily old -- the cache entry is only as fresh as
+    # the last run that saved one -- and resolving a repository against a stale registry
+    # gives answers that do not match what its CI would install. So refresh rather than
+    # merely reuse. `julia-actions/cache` happens to run `Pkg.Registry.update()` itself
+    # after restoring a non-empty registries directory, but that is an undocumented
+    # implementation detail of that action rather than a contract, and this action's
+    # results should not silently go stale if it changes. The duplicated update costs a
+    # second or two when it has in fact already happened.
+    #
+    # Best-effort throughout: a registry that could not be installed or refreshed
+    # degrades the analysis (`julialint` reports it per-scope) but should not turn a
+    # transient outage into a failed lint job.
+    - name: Install or refresh the registries in the job depot
+      shell: bash
+      # No JULIA_DEPOT_PATH here, deliberately: this has to land in the default depot.
+      run: |
+        julia --color=yes -e '
+          import Pkg
+          try
+              if isempty(Pkg.Registry.reachable_registries())
+                  Pkg.Registry.add()
+              else
+                  Pkg.Registry.update()
+              end
+          catch err
+              showerror(stderr, err)
+              println(stderr)
+              println("::warning::Could not install or refresh the Julia registries in $(DEPOT_PATH[1]); environments may not resolve.")
+          end
+        '
     # The toolkit -- LintApp and the tree this repository's manifest pins -- is the same on
     # every run, so it does not belong in the job's depot where it is re-saved per run and
     # duplicated per ref. It gets a depot of its own here, under a key nothing run-specific
