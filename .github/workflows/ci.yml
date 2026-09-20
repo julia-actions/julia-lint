@@ -18,3 +18,31 @@ jobs:
         run: |
           npm run build
           git diff --exit-code dist/index.js
+
+  # Runs the action against a fixture package that has a registered dependency
+  # and no committed Manifest.toml, and checks that `julialint` could actually
+  # resolve its test environment. That resolution happens in the runner's
+  # default depot, which the action has to seed with the registries first -- a
+  # regression there is silent (a `notice`-level finding, never a failing step),
+  # so it is asserted here rather than left to be noticed in a caller's PR.
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./
+        with:
+          path: test/fixtures/SelfTestPkg
+          sarif-path: self-test.sarif
+          # Lint findings in the fixture are not what this job is about; a tool
+          # failure (exit code 2) still fails the step.
+          fail-on-errors: false
+      - name: The fixture's environment must have resolved
+        run: |
+          set -euo pipefail
+          failures=$(jq '[.runs[].results[]? | select(.ruleId == "environment_errors")]' self-test.sarif)
+          if [ "$(jq 'length' <<<"$failures")" != "0" ]; then
+            echo "::error::julialint could not resolve the fixture's environment"
+            jq . <<<"$failures"
+            exit 1
+          fi
+          echo "No environment_errors results in the SARIF."

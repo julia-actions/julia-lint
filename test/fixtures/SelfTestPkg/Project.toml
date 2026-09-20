@@ -1,0 +1,20 @@
+name = "SelfTestPkg"
+uuid = "46b07633-27a9-4e36-b0c5-b8d299604425"
+version = "0.1.0"
+
+# A registered dependency, and deliberately no committed Manifest.toml: that is
+# the shape whose test environment `julialint` has to resolve from a registry.
+# A dependency-free fixture would resolve from the stdlibs alone and prove
+# nothing.
+[deps]
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+
+[compat]
+JSON = "0.21, 1"
+julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
